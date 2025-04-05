@@ -17,13 +17,14 @@ use tower_http::{
 };
 
 use crate::{
+    app_state::AppStateRef,
     config::{CONFIG, Env},
     constants,
     ctx::layers::auth_layer,
     models::error::HttpError,
 };
 
-pub fn api_router() -> Router {
+pub fn api_router() -> Router<AppStateRef> {
     let cors = CorsLayer::new().allow_origin(match CONFIG.env {
         Env::DEV => AllowOrigin::any(),
         Env::RELEASE => AllowOrigin::from(vec![constants::WEBSITE_URL.parse().unwrap()]),

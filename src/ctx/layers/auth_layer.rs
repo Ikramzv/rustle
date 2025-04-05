@@ -6,12 +6,16 @@ use std::{
 
 use axum::{
     body::Body,
-    http::{Method, Request, Response, StatusCode},
+    http::{HeaderMap, HeaderValue, Method, Request, Response},
     response::IntoResponse,
 };
 use tower::{Layer, Service};
 
-use crate::models::error::HttpError;
+use crate::{
+    config::CONFIG,
+    ctx::{extractors::auth_user::AuthUser, utils::jwt},
+    models::error::HttpError,
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct ExcludedPaths {
@@ -25,7 +29,7 @@ pub struct ExcludedPaths {
 impl ExcludedPaths {
     pub fn new() -> Self {
         Self {
-            post: HashSet::from_iter(["/auth/login", "/auth/register"]),
+            post: HashSet::from_iter(["/auth/login", "/auth/verify"]),
             get: HashSet::from_iter([]),
             put: HashSet::from_iter([]),
             patch: HashSet::from_iter([]),
@@ -73,7 +77,7 @@ where
         self.inner.poll_ready(cx)
     }
 
-    fn call(&mut self, req: Request<ReqBody>) -> Self::Future {
+    fn call(&mut self, mut req: Request<ReqBody>) -> Self::Future {
         let clone = self.inner.clone();
 
         let mut inner = std::mem::replace(&mut self.inner, clone);
@@ -95,17 +99,20 @@ where
                 return inner.call(req).await;
             }
 
-            let authenticated = false;
+            let headers = req.headers().clone();
+
+            let user_id = authorize_user(headers).await;
+
+            if let Err(e) = user_id {
+                return Ok(HttpError::unauthorized(e).into_response());
+            }
+
+            req.extensions_mut()
+                .insert::<AuthUser>(AuthUser(user_id.unwrap()));
 
             let fut = inner.call(req).await;
 
-            if authenticated {
-                return fut;
-            }
-
-            let error = HttpError::new(StatusCode::UNAUTHORIZED, "Unauthorized".to_string());
-
-            Ok(error.into_response())
+            fut
         })
     }
 }
@@ -119,4 +126,21 @@ impl<S> Layer<S> for AuthLayer {
             excluded_paths: self.excluded_paths.clone(),
         }
     }
+}
+
+async fn authorize_user(headers: HeaderMap<HeaderValue>) -> Result<String, String> {
+    let token = headers
+        .get("Authorization")
+        .and_then(|header| header.to_str().ok())
+        .and_then(|value| value.split(" ").nth(1));
+
+    if token.is_none() {
+        return Err("Unauthorized".to_string());
+    }
+
+    let token = token.unwrap();
+
+    let user_id = jwt::validate_token(token, &CONFIG.jwt_secret).await?;
+
+    Ok(user_id)
 }

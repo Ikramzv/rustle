@@ -18,6 +18,18 @@ impl HttpError {
             message,
         }
     }
+
+    pub fn bad_request(message: String) -> Self {
+        Self::new(StatusCode::BAD_REQUEST, message)
+    }
+
+    pub fn server_error(message: String) -> Self {
+        Self::new(StatusCode::INTERNAL_SERVER_ERROR, message)
+    }
+
+    pub fn unauthorized(message: String) -> Self {
+        Self::new(StatusCode::UNAUTHORIZED, message)
+    }
 }
 
 impl IntoResponse for HttpError {
@@ -27,5 +39,11 @@ impl IntoResponse for HttpError {
             Json(self),
         )
             .into_response()
+    }
+}
+
+impl From<anyhow::Error> for HttpError {
+    fn from(value: anyhow::Error) -> Self {
+        Self::server_error(value.to_string())
     }
 }
