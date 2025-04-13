@@ -6,14 +6,11 @@ use lettre::{
 
 use crate::config::CONFIG;
 
-async fn send_mail(mailer: &SmtpTransport, m: &Message) -> Result<(), String> {
+fn send_mail(mailer: &SmtpTransport, m: Message) -> Result<(), String> {
     let mailer = mailer.clone();
     let m = m.clone();
 
-    tokio::task::spawn_blocking(move || mailer.send(&m))
-        .await
-        .map_err(|e| e.to_string())?
-        .map_err(|e| e.to_string())?;
+    mailer.send(&m).map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -36,5 +33,11 @@ pub async fn send_verification_mail(
         .body(format!("Your verification code is {}", code))
         .map_err(|e| e.to_string())?;
 
-    send_mail(mailer, &m).await
+    let mailer = mailer.clone();
+
+    tokio::task::spawn(async move { send_mail(&mailer, m) })
+        .await
+        .map_err(|e| e.to_string())??;
+
+    Ok(())
 }

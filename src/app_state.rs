@@ -1,13 +1,15 @@
 use std::sync::Arc;
 
 use lettre::{SmtpTransport, transport::smtp::authentication::Credentials};
+use s3::Bucket;
 use sqlx::PgPool;
 
-use crate::config::CONFIG;
+use crate::{config::CONFIG, ctx::services::s3::get_bucket};
 
 pub struct AppState {
     pub db: PgPool,
     pub smtp: SmtpTransport,
+    pub s3: Bucket,
 }
 
 impl AppState {
@@ -20,11 +22,13 @@ impl AppState {
             ))
             .build();
 
-        Self { db, smtp }
+        let s3 = get_bucket();
+
+        Self { db, smtp, s3 }
     }
 }
 
-pub type AppStateRef = Arc<AppState>;
+pub type SharedAppState = Arc<AppState>;
 
 // impl FromRef<AppState> for PgPool {
 //     fn from_ref(state: &AppState) -> Self {

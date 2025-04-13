@@ -33,6 +33,7 @@ pub struct Config {
     pub mail_config: MailConfig,
     pub jwt_secret: String,
     pub jwt_expiration_duration: Duration,
+    pub request_body_limit: usize,
 }
 
 impl Config {
@@ -51,12 +52,17 @@ impl Config {
             .map(|s| Duration::from_secs(s.parse::<u64>().unwrap()))
             .expect("JWT_EXPIRATION_DURATION is not set");
 
+        let request_body_limit = std::env::var("REQUEST_BODY_LIMIT")
+            .map(|s| s.parse::<u64>().unwrap())
+            .unwrap_or(5 * 1024 * 1024); // 5 Mb
+
         Self {
             env,
             db_url,
             mail_config,
             jwt_secret,
             jwt_expiration_duration,
+            request_body_limit: request_body_limit as usize,
         }
     }
 }

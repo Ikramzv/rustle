@@ -1,0 +1,44 @@
+use sqlx::{PgPool, Result};
+
+use crate::{dtos::user::UpdateProfileDto, models::user::User};
+
+pub async fn get_user_by_id(pool: &PgPool, user_id: &str) -> Result<Option<User>> {
+    let user: Option<User> = sqlx::query_as(r#"SELECT * FROM users WHERE id = $1"#)
+        .bind(user_id)
+        .fetch_optional(pool)
+        .await?;
+
+    Ok(user)
+}
+
+pub async fn get_user_by_username(pool: &PgPool, username: &str) -> Result<Option<User>> {
+    let user: Option<User> = sqlx::query_as(r#"SELECT * FROM users WHERE username = $1"#)
+        .bind(username)
+        .fetch_optional(pool)
+        .await?;
+
+    Ok(user)
+}
+
+pub async fn update_user(pool: &PgPool, user_id: &str, payload: UpdateProfileDto) -> Result<User> {
+    let user = match get_user_by_id(pool, user_id).await? {
+        Some(user) => user,
+        None => return Err(sqlx::Error::RowNotFound),
+    };
+
+    let profile_image_url = match payload.profile_image_url {
+        Some(url) => Some(url),
+        None => user.profile_image_url,
+    };
+
+    let user: User = sqlx::query_as(
+        r#"UPDATE users SET username = $1, profile_image_url = $2 WHERE id = $3 RETURNING *"#,
+    )
+    .bind(payload.username.unwrap_or(user.username))
+    .bind(profile_image_url)
+    .bind(user_id)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(user)
+}

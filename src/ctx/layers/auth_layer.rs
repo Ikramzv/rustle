@@ -11,11 +11,7 @@ use axum::{
 };
 use tower::{Layer, Service};
 
-use crate::{
-    config::CONFIG,
-    ctx::{extractors::auth_user::AuthUser, utils::jwt},
-    models::error::HttpError,
-};
+use crate::{config::CONFIG, ctx::utils::jwt, models::error::HttpError};
 
 #[derive(Debug, Clone, Default)]
 pub struct ExcludedPaths {
@@ -29,7 +25,7 @@ pub struct ExcludedPaths {
 impl ExcludedPaths {
     pub fn new() -> Self {
         Self {
-            post: HashSet::from_iter(["/auth/login", "/auth/verify"]),
+            post: HashSet::from_iter(["/auth/login", "/auth/verify", "/upload"]),
             get: HashSet::from_iter([]),
             put: HashSet::from_iter([]),
             patch: HashSet::from_iter([]),
@@ -37,6 +33,9 @@ impl ExcludedPaths {
         }
     }
 }
+
+#[derive(Clone)]
+pub struct AuthUser(pub String);
 
 #[derive(Debug, Clone)]
 pub struct AuthLayer {
@@ -66,7 +65,6 @@ impl<S, ReqBody> Service<Request<ReqBody>> for AuthLayerService<S>
 where
     S: Service<Request<ReqBody>, Response = Response<Body>> + Clone + Send + Sync + 'static,
     S::Future: Send,
-    S::Error: Send + std::fmt::Debug,
     ReqBody: Send + 'static,
 {
     type Error = S::Error;
@@ -111,6 +109,8 @@ where
                 .insert::<AuthUser>(AuthUser(user_id.unwrap()));
 
             let fut = inner.call(req).await;
+
+            println!("fut: {:?}", fut.is_ok());
 
             fut
         })

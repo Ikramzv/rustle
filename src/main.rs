@@ -4,6 +4,7 @@ mod constants;
 mod ctx;
 mod dtos;
 mod models;
+mod repositories;
 mod router;
 
 use std::sync::Arc;
@@ -36,7 +37,5 @@ async fn main() {
 
     tracing::info!("Listening on {}", listener.local_addr().unwrap());
 
-    axum::serve(listener, app.into_make_service())
-        .await
-        .unwrap();
+    axum::serve(listener, app).await.unwrap();
 }

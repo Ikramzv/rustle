@@ -11,6 +11,18 @@ pub struct HttpError {
     message: String,
 }
 
+impl std::error::Error for HttpError {}
+
+impl std::fmt::Display for HttpError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "HttpError: status={}, message={}",
+            self.status, self.message
+        )
+    }
+}
+
 impl HttpError {
     pub fn new(status: StatusCode, message: String) -> Self {
         Self {

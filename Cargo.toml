@@ -5,7 +5,8 @@ edition = "2024"
 
 [dependencies]
 tokio = { version = "1.44.1", features = ["full"] }
-axum = { version = "0.8.1" }
+axum = { version = "0.8.1", features = ["multipart"]}
+axum-extra = { version = "0.10.0", features = ["typed-header"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 tower = { version = "0.5.2" }
@@ -20,6 +21,7 @@ dotenv = "0.15.0"
 lettre = { version = "0.11.15" }
 validator = { version = "0.20.0", features = ["derive"] }
 rand = "0.9.0"
+rust-s3 = "0.35.1"
 
 
 [profile.dev]

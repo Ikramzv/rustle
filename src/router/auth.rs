@@ -1,19 +1,13 @@
-use axum::{
-    Extension, Json, Router,
-    extract::State,
-    response::IntoResponse,
-    routing::{get, post},
-};
+use axum::{Json, Router, extract::State, response::IntoResponse, routing::post};
 use chrono::Utc;
 use sqlx::PgPool;
 use validator::Validate;
 
 use crate::{
-    app_state::AppStateRef,
+    app_state::SharedAppState,
     config::CONFIG,
     constants::VERIFICATION_PIN_EXPIRATION_TIME,
     ctx::{
-        extractors::auth_user::AuthUser,
         services::mail::send_verification_mail,
         utils::{jwt, pin::generate_pin},
     },
@@ -24,21 +18,8 @@ use crate::{
     },
 };
 
-async fn get_me(
-    State(app_state): State<AppStateRef>,
-    Extension(AuthUser(user_id)): Extension<AuthUser>,
-) -> Result<impl IntoResponse, HttpError> {
-    let user: User = sqlx::query_as(r#"SELECT * FROM users WHERE id = $1"#)
-        .bind(user_id)
-        .fetch_one(&app_state.db)
-        .await
-        .map_err(|e| HttpError::server_error(e.to_string()))?;
-
-    Ok(Json(user))
-}
-
 async fn verify_email(
-    State(app_state): State<AppStateRef>,
+    State(app_state): State<SharedAppState>,
     Json(body): Json<VerifyEmailDto>,
 ) -> Result<impl IntoResponse, HttpError> {
     body.validate()
@@ -81,7 +62,7 @@ async fn verify_email(
 }
 
 async fn login(
-    State(app_state): State<AppStateRef>,
+    State(app_state): State<SharedAppState>,
     Json(body): Json<LoginUserDto>,
 ) -> Result<impl IntoResponse, HttpError> {
     body.validate()
@@ -154,14 +135,13 @@ async fn create_user_if_not_exists(db: &PgPool, body: LoginUserDto) -> Result<Us
     Ok(user)
 }
 
-pub fn router() -> Router<AppStateRef> {
+pub fn router() -> Router<SharedAppState> {
     let base = Router::new();
 
     base.nest(
         "/auth",
         Router::new()
             .route("/login", post(login))
-            .route("/verify", post(verify_email))
-            .route("/me", get(get_me)),
+            .route("/verify", post(verify_email)),
     )
 }
