@@ -1,6 +1,34 @@
 use sqlx::{PgPool, Result};
 
-use crate::{dtos::user::UpdateProfileDto, models::user::User};
+use crate::{dtos::user::UpdateProfileDto, models::User};
+
+pub async fn create_user_if_not_exists(
+    pool: &PgPool,
+    email: &str,
+    username: &str,
+    profile_image_url: Option<String>,
+) -> Result<User> {
+    let user: Option<User> = get_user_by_email(pool, email).await?;
+
+    if let Some(user) = user {
+        return Ok(user);
+    }
+
+    let user: User = sqlx::query_as(
+        r#"INSERT INTO users 
+            (email, username, profile_image_url)
+            VALUES ($1, $2, $3)
+            RETURNING *
+        "#,
+    )
+    .bind(email)
+    .bind(username)
+    .bind(profile_image_url)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(user)
+}
 
 pub async fn get_user_by_id(pool: &PgPool, user_id: &str) -> Result<Option<User>> {
     let user: Option<User> = sqlx::query_as(r#"SELECT * FROM users WHERE id = $1"#)
@@ -14,6 +42,15 @@ pub async fn get_user_by_id(pool: &PgPool, user_id: &str) -> Result<Option<User>
 pub async fn get_user_by_username(pool: &PgPool, username: &str) -> Result<Option<User>> {
     let user: Option<User> = sqlx::query_as(r#"SELECT * FROM users WHERE username = $1"#)
         .bind(username)
+        .fetch_optional(pool)
+        .await?;
+
+    Ok(user)
+}
+
+pub async fn get_user_by_email(pool: &PgPool, email: &str) -> Result<Option<User>> {
+    let user: Option<User> = sqlx::query_as(r#"SELECT * FROM users WHERE email = $1"#)
+        .bind(email)
         .fetch_optional(pool)
         .await?;
 

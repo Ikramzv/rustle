@@ -11,7 +11,8 @@ use axum::{
 };
 use tower::{Layer, Service};
 
-use crate::{config::CONFIG, ctx::utils::jwt, models::error::HttpError};
+use crate::core::error::http_error::HttpError;
+use crate::{config::CONFIG, core::utils::jwt};
 
 #[derive(Debug, Clone, Default)]
 pub struct ExcludedPaths {

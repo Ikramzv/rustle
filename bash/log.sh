@@ -1,0 +1,1 @@
+sudo journalctl --unit=api -n 100 --no-pager -f

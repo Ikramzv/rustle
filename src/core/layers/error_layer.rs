@@ -1,14 +1,14 @@
-use std::{pin::Pin, str::FromStr};
+use std::pin::Pin;
 
 use axum::{
     body::Body,
     extract::Request,
-    http::{HeaderName, response::Parts},
+    http::response::Parts,
     response::{IntoResponse, Response},
 };
 use tower::{Layer, Service};
 
-use crate::models::error::HttpError;
+use crate::core::error::http_error::HttpError;
 
 #[derive(Clone)]
 pub struct GlobalErrorLayer;
@@ -51,8 +51,6 @@ where
         let fut = self.0.call(req);
 
         Box::pin(async move {
-            println!("Called GlobalErrorService");
-
             let res = fut.await;
 
             match res {
@@ -86,13 +84,7 @@ async fn handle_response(res: Response) -> Response {
 }
 
 fn handle_json_error(parts: Parts, json: serde_json::Value) -> Response {
-    let default_message = serde_json::Value::String("Unknown server error".to_string());
-
-    let message = json.get("message").unwrap_or(&default_message);
-
-    let http_error = HttpError::new(parts.status, message.to_string());
-
-    return http_error.into_response();
+    Response::from_parts(parts, Body::from(json.to_string()))
 }
 
 fn handle_text_error(parts: Parts, bytes: &[u8]) -> Response {

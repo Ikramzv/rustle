@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::models::user::User;
+use crate::models::User;
 
 #[derive(Debug, Deserialize, Validate, Clone)]
 pub struct LoginUserDto {
