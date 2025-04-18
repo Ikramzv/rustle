@@ -1,5 +1,4 @@
 use std::{
-    collections::HashSet,
     pin::Pin,
     task::{Context, Poll},
 };
@@ -16,22 +15,32 @@ use crate::{config::CONFIG, core::utils::jwt};
 
 #[derive(Debug, Clone, Default)]
 pub struct ExcludedPaths {
-    post: HashSet<&'static str>,
-    get: HashSet<&'static str>,
-    put: HashSet<&'static str>,
-    patch: HashSet<&'static str>,
-    delete: HashSet<&'static str>,
+    post: matchit::Router<()>,
+    get: matchit::Router<()>,
+    put: matchit::Router<()>,
+    patch: matchit::Router<()>,
+    delete: matchit::Router<()>,
 }
 
 impl ExcludedPaths {
     pub fn new() -> Self {
         Self {
-            post: HashSet::from_iter(["/auth/login", "/auth/verify", "/upload"]),
-            get: HashSet::from_iter([]),
-            put: HashSet::from_iter([]),
-            patch: HashSet::from_iter([]),
-            delete: HashSet::from_iter([]),
+            post: Self::from(&["/auth/login", "/auth/verify", "/upload"]),
+            get: Self::from(&["/posts", "/posts/{post_id}", "/posts/user/{user_id}"]),
+            put: Self::from(&[]),
+            patch: Self::from(&[]),
+            delete: Self::from(&[]),
         }
+    }
+
+    fn from(paths: &[&str]) -> matchit::Router<()> {
+        let mut router = matchit::Router::new();
+
+        paths.iter().for_each(|value| {
+            router.insert(value.to_string(), ()).unwrap();
+        });
+
+        router
     }
 }
 
@@ -85,11 +94,11 @@ where
         let path = req.uri().path();
 
         let excluded = match method {
-            &Method::GET => self.excluded_paths.get.contains(path),
-            &Method::POST => self.excluded_paths.post.contains(path),
-            &Method::PUT => self.excluded_paths.put.contains(path),
-            &Method::PATCH => self.excluded_paths.patch.contains(path),
-            &Method::DELETE => self.excluded_paths.delete.contains(path),
+            &Method::GET => self.excluded_paths.get.at(path).is_ok(),
+            &Method::POST => self.excluded_paths.post.at(path).is_ok(),
+            &Method::PUT => self.excluded_paths.put.at(path).is_ok(),
+            &Method::PATCH => self.excluded_paths.patch.at(path).is_ok(),
+            &Method::DELETE => self.excluded_paths.delete.at(path).is_ok(),
             _ => false,
         };
 

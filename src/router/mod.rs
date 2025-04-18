@@ -26,7 +26,7 @@ use crate::{
     constants,
     core::error::http_error::HttpError,
     core::{
-        layers::{auth_layer, error_layer::GlobalErrorLayer},
+        layers::auth_layer,
         services::{mail::MailService, s3::S3Service},
     },
 };
@@ -62,7 +62,6 @@ fn init_layers(router: Router<SharedAppState>) -> Router<SharedAppState> {
                 .layer(auth_layer::AuthLayer::new().except(auth_layer::ExcludedPaths::new()))
                 .layer(DefaultBodyLimit::max(CONFIG.request_body_limit)),
         )
-        .layer(GlobalErrorLayer::new())
         .fallback(handle_404)
         .method_not_allowed_fallback(handle_405)
 }

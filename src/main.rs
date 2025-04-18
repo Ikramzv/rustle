@@ -8,6 +8,7 @@ mod extensions;
 mod models;
 mod router;
 mod service;
+mod types;
 
 use std::sync::Arc;
 

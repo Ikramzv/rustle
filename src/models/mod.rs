@@ -79,6 +79,7 @@ pub struct Post {
     pub user_id: String,
     pub title: String,
     pub content: String,
+    #[serde(with = "chrono::serde::ts_seconds")]
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
     pub deleted_at: Option<chrono::DateTime<chrono::Utc>>,

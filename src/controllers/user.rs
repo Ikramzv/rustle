@@ -1,4 +1,5 @@
-use axum::{Extension, Json, extract::State, response::IntoResponse};
+use crate::core::extractors::json::Json;
+use axum::{Extension, extract::State, response::IntoResponse};
 use validator::Validate;
 
 use crate::{

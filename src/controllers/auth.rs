@@ -1,9 +1,10 @@
 use axum::extract::{Extension, State};
-use axum::response::{IntoResponse, Json};
+use axum::response::IntoResponse;
 use chrono::Utc;
 use validator::Validate;
 
 use crate::core::error::http_error::HttpError;
+use crate::core::extractors::json::Json;
 use crate::dtos::auth::VerifyEmailDto;
 use crate::extensions::MailServiceExt;
 use crate::service::user::{create_user_if_not_exists, get_user_by_email};
@@ -55,14 +56,6 @@ pub async fn verify_email(
     Ok(Json(VerifyResponseDto { token, user }))
 }
 
-#[tracing::instrument(
-    name = "Login",
-    skip(app_state, mail_service, body),
-    fields(
-        email = %body.email,
-    ),
-    err
-)]
 pub async fn login(
     State(app_state): State<SharedAppState>,
     Extension(mail_service): MailServiceExt,
