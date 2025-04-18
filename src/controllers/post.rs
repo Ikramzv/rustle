@@ -11,7 +11,7 @@ use validator::Validate;
 use crate::{
     app_state::SharedAppState,
     core::{error::http_error::HttpError, extractors::json::Json, layers::auth_layer::AuthUser},
-    dtos::post::{CreatePostDto, UpdatePostDto},
+    dtos::post::{CreatePostDto, CreatePostResponseDto, UpdatePostDto},
     service,
     types::PaginationQuery,
 };
@@ -23,11 +23,14 @@ pub async fn create_post(
 ) -> Result<impl IntoResponse, HttpError> {
     body.validate().map_err(HttpError::validation_error)?;
 
-    let post = service::post::create_post(&app_state.db, &user_id, body)
+    let (post, post_media_list) = service::post::create_post(&app_state.db, &user_id, body)
         .await
         .map_err(|e| HttpError::server_error(e.to_string()))?;
 
-    Ok(Json(post))
+    Ok(Json(CreatePostResponseDto {
+        post,
+        media: post_media_list,
+    }))
 }
 
 pub async fn find_posts(

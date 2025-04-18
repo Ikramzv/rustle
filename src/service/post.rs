@@ -1,11 +1,17 @@
+use std::sync::Arc;
+
 use sqlx::{PgPool, Result};
 
 use crate::{
     dtos::post::{CreatePostDto, UpdatePostDto},
-    models::Post,
+    models::{Post, PostMedia},
 };
 
-pub async fn create_post(pool: &PgPool, user_id: &str, body: CreatePostDto) -> Result<Post> {
+pub async fn create_post(
+    pool: &PgPool,
+    user_id: &str,
+    body: CreatePostDto,
+) -> Result<(Post, Vec<PostMedia>), String> {
     let post: Post = sqlx::query_as(
         r#"
         INSERT INTO posts (user_id, title, content)
@@ -17,9 +23,46 @@ pub async fn create_post(pool: &PgPool, user_id: &str, body: CreatePostDto) -> R
     .bind(&body.title)
     .bind(&body.content)
     .fetch_one(pool)
-    .await?;
+    .await
+    .map_err(|e| e.to_string())?;
 
-    Ok(post)
+    let mut handles = Vec::new();
+
+    let pool = Arc::new(pool.clone());
+
+    for media in body.media {
+        let pool = pool.clone();
+        let post_id = post.id.clone();
+        let handle = tokio::spawn(async move {
+            let post_media: PostMedia = sqlx::query_as(r#"
+                INSERT INTO post_media (post_id, media_url, media_type, mime_type, width, height, file_size)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                RETURNING *
+            "#)
+            .bind(&post_id)
+            .bind(&media.url)
+            .bind(&media.r#type)
+            .bind(&media.mime_type)
+            .bind(&media.width)
+            .bind(&media.height)
+            .bind(&media.size)
+            .fetch_one(&*pool)
+            .await
+            .map_err(|e| e.to_string())?;
+
+            Ok::<PostMedia, String>(post_media)
+        });
+
+        handles.push(handle);
+    }
+
+    let mut post_media_list = Vec::with_capacity(handles.len());
+
+    for handle in handles {
+        post_media_list.push(handle.await.map_err(|e| e.to_string())??);
+    }
+
+    Ok((post, post_media_list))
 }
 
 pub async fn find_posts(pool: &PgPool, offset: i32, limit: i32) -> Result<Vec<Post>> {
