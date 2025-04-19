@@ -120,8 +120,6 @@ where
 
             let fut = inner.call(req).await;
 
-            println!("fut: {:?}", fut.is_ok());
-
             fut
         })
     }

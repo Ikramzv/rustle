@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::prelude::{FromRow, Type};
 
 #[derive(Debug, Type)]
-#[sqlx(type_name = "MediaType")]
+#[sqlx(type_name = "MediaType", rename_all = "lowercase")]
 pub enum MediaType {
     Image,
     Video,
@@ -79,10 +79,15 @@ pub struct Post {
     pub user_id: String,
     pub title: String,
     pub content: String,
-    #[serde(with = "chrono::serde::ts_seconds")]
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
     pub deleted_at: Option<chrono::DateTime<chrono::Utc>>,
+
+    // Relations
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub likes_count: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub comments_count: Option<i64>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -97,6 +102,13 @@ pub struct PostMedia {
     pub height: Option<i32>,
     pub file_size: Option<i32>,
     pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct PostDetails {
+    #[serde(flatten)]
+    pub post: Post,
+    pub media: Vec<PostMedia>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]

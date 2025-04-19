@@ -82,3 +82,9 @@ CREATE TABLE post_comments (
 CREATE INDEX idx_post_comments_post_id ON post_comments (post_id);
 CREATE INDEX idx_post_comments_user_id ON post_comments (user_id);
 CREATE INDEX idx_post_comments_parent_id ON post_comments (parent_id);
+
+-- Triggers
+
+SELECT trigger_updated_at('users');
+SELECT trigger_updated_at('posts');
+SELECT trigger_updated_at('post_comments');

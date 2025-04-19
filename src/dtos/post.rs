@@ -3,7 +3,8 @@ use validator::Validate;
 
 use crate::models::{MediaType, Post, PostMedia};
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
+#[serde(rename_all(deserialize = "camelCase"))]
 pub struct PostMediaDto {
     pub url: String,
     pub r#type: MediaType,
