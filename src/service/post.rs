@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::Instant};
+use std::{collections::HashMap, sync::Arc, time::Instant};
 
 use sqlx::{PgPool, Result};
 
@@ -66,6 +66,9 @@ pub async fn create_post(
 }
 
 pub async fn find_posts(pool: &PgPool, offset: i32, limit: i32) -> Result<Vec<PostDetails>> {
+    let before = Instant::now();
+
+    // First, get all posts with their counts in a single query
     let posts: Vec<Post> = sqlx::query_as(
         r#"
         SELECT 
@@ -87,17 +90,15 @@ pub async fn find_posts(pool: &PgPool, offset: i32, limit: i32) -> Result<Vec<Po
     .fetch_all(pool)
     .await?;
 
-    let mut post_details: Vec<PostDetails> = Vec::with_capacity(posts.len());
+    tracing::info!("[find_posts] Posts query time: {:?}", before.elapsed());
 
-    let before = Instant::now();
-
-    for post in posts {
-        let media: Vec<PostMedia> = find_post_media_by_post_id(pool, &post.id).await?;
-
-        post_details.push(PostDetails { post, media });
+    if posts.is_empty() {
+        return Ok(Vec::new());
     }
 
-    tracing::info!("[find_posts_media] Time taken: {:?}", before.elapsed());
+    // Get all media for these posts in a single query
+
+    let post_details = get_post_details(pool, posts).await?;
 
     Ok(post_details)
 }
@@ -130,13 +131,7 @@ pub async fn find_user_posts(
     .fetch_all(pool)
     .await?;
 
-    let mut post_details: Vec<PostDetails> = Vec::with_capacity(posts.len());
-
-    for post in posts {
-        let media: Vec<PostMedia> = find_post_media_by_post_id(pool, &post.id).await?;
-
-        post_details.push(PostDetails { post, media });
-    }
+    let post_details = get_post_details(pool, posts).await?;
 
     Ok(post_details)
 }
@@ -196,6 +191,49 @@ pub async fn delete_post(pool: &PgPool, user_id: &str, post_id: &str) -> Result<
     .await?;
 
     Ok(deleted_post)
+}
+
+pub async fn find_posts_media_by_post_ids(
+    pool: &PgPool,
+    post_ids: &[String],
+) -> Result<Vec<PostMedia>> {
+    let post_media: Vec<PostMedia> = sqlx::query_as(
+        r#"
+        SELECT * FROM posts_media WHERE post_id = ANY($1)
+        "#,
+    )
+    .bind(post_ids)
+    .fetch_all(pool)
+    .await?;
+
+    Ok(post_media)
+}
+
+pub async fn get_post_details(pool: &PgPool, posts: Vec<Post>) -> Result<Vec<PostDetails>> {
+    let post_ids: Vec<String> = posts.iter().map(|p| p.id.clone()).collect();
+
+    let media: Vec<PostMedia> = find_posts_media_by_post_ids(pool, &post_ids).await?;
+
+    // Group media by post_id for efficient lookup
+    let mut media_by_post: HashMap<String, Vec<PostMedia>> = HashMap::new();
+
+    for m in media {
+        media_by_post.entry(m.post_id.clone()).or_default().push(m);
+    }
+
+    // Combine posts with their media
+    let post_details: Vec<PostDetails> = posts
+        .into_iter()
+        .map(|post| {
+            let post_id = post.id.clone();
+            PostDetails {
+                post,
+                media: media_by_post.remove(&post_id).unwrap_or_default(),
+            }
+        })
+        .collect();
+
+    Ok(post_details)
 }
 
 pub async fn find_post_media_by_post_id(pool: &PgPool, post_id: &str) -> Result<Vec<PostMedia>> {

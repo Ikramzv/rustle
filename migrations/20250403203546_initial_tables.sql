@@ -64,7 +64,7 @@ CREATE TABLE post_likes (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX idx_post_likes_post_id_user_id ON post_likes (post_id, user_id);
+CREATE UNIQUE INDEX idx_post_likes_post_id ON post_likes (post_id);
 
 -- Post Comments
 

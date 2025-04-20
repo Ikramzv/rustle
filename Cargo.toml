@@ -25,7 +25,7 @@ rust-s3 = "0.35.1"
 pin-project = "1.1.10"
 thiserror = "2.0.12"
 matchit = "0.8.4"
-
+fake = { version = "4.3.0" }
 
 [profile.dev]
 
