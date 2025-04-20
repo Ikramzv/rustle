@@ -1,4 +1,4 @@
-# Rustle - social media written in Rust
+# Rustle - social media application written in pure Rust
 
 This is a web application built with Rust.
 
