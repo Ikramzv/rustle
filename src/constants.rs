@@ -11,4 +11,4 @@ pub const VERIFICATION_PIN_EXPIRATION_TIME: Duration = Duration::from_secs(60 * 
 
 pub const DEFAULT_POSTS_PAGINATION_LIMIT: i32 = 20;
 
-pub const TEST_PIN: u32 = 1234567;
+// pub const TEST_PIN: u32 = 1234567;

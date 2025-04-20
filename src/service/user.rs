@@ -39,6 +39,14 @@ pub async fn get_user_by_id(pool: &PgPool, user_id: &str) -> Result<Option<User>
     Ok(user)
 }
 
+pub async fn get_users_by_ids(pool: &PgPool, user_ids: &[String]) -> Result<Vec<User>> {
+    let users: Vec<User> = sqlx::query_as(r#"SELECT * FROM users WHERE id = ANY($1)"#)
+        .bind(user_ids)
+        .fetch_all(pool)
+        .await?;
+
+    Ok(users)
+}
 pub async fn get_user_by_username(pool: &PgPool, username: &str) -> Result<Option<User>> {
     let user: Option<User> = sqlx::query_as(r#"SELECT * FROM users WHERE username = $1"#)
         .bind(username)

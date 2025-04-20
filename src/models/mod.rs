@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::prelude::{FromRow, Type};
 
-#[derive(Debug, Type)]
+#[derive(Debug, Type, Clone)]
 #[sqlx(type_name = "MediaType", rename_all = "lowercase")]
 pub enum MediaType {
     Image,
@@ -50,7 +50,7 @@ impl MediaType {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct User {
     pub id: String,
@@ -72,7 +72,7 @@ pub struct VerificationPin {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Post {
     pub id: String,
@@ -82,15 +82,9 @@ pub struct Post {
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
     pub deleted_at: Option<chrono::DateTime<chrono::Utc>>,
-
-    // Relations
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub likes_count: Option<i64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub comments_count: Option<i64>,
 }
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PostMedia {
     pub id: String,
@@ -104,11 +98,14 @@ pub struct PostMedia {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct PostDetails {
     #[serde(flatten)]
     pub post: Post,
+    pub author: User,
     pub media: Vec<PostMedia>,
+    pub likes_count: i64,
+    pub comments_count: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -131,4 +128,12 @@ pub struct PostComment {
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
     pub deleted_at: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PostCommentDetails {
+    #[serde(flatten)]
+    pub comment: PostComment,
+    pub author: User,
 }

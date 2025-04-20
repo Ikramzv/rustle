@@ -4,7 +4,6 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
 };
-use axum_extra::{TypedHeader, headers};
 use serde_json::json;
 use validator::Validate;
 
@@ -100,13 +99,29 @@ pub async fn delete_post(
     match post {
         Some(_) => Ok((
             StatusCode::ACCEPTED,
-            TypedHeader(headers::ContentType::json()),
-            json!({
+            Json(json!({
                 "success": true,
                 "message": "Post deleted successfully"
-            })
-            .to_string(),
+            })),
         )),
         None => Err(HttpError::not_found("Post not found".into())),
     }
+}
+
+pub async fn like_post(
+    State(app_state): State<SharedAppState>,
+    Path(post_id): Path<String>,
+    Extension(AuthUser(user_id)): Extension<AuthUser>,
+) -> Result<impl IntoResponse, HttpError> {
+    let is_liked = service::post::like_post(&app_state.db, &user_id, &post_id)
+        .await
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => HttpError::not_found("Post not found".into()),
+            _ => HttpError::server_error(e.to_string()),
+        })?;
+
+    Ok(Json(json!({
+        "success": true,
+        "liked": is_liked
+    })))
 }

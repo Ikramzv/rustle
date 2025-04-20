@@ -14,6 +14,7 @@ pub fn router() -> Router<SharedAppState> {
             .route("/user/{user_id}", get(controllers::post::find_user_posts))
             .route("/{post_id}", get(controllers::post::find_post_by_id))
             .route("/{post_id}", patch(controllers::post::update_post))
-            .route("/{post_id}", delete(controllers::post::delete_post)),
+            .route("/{post_id}", delete(controllers::post::delete_post))
+            .route("/like/{post_id}", post(controllers::post::like_post)),
     )
 }

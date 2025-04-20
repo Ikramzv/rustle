@@ -26,7 +26,13 @@ impl ExcludedPaths {
     pub fn new() -> Self {
         Self {
             post: Self::from(&["/auth/login", "/auth/verify", "/upload"]),
-            get: Self::from(&["/posts", "/posts/{post_id}", "/posts/user/{user_id}"]),
+            get: Self::from(&[
+                "/posts",
+                "/posts/{post_id}",
+                "/posts/user/{user_id}",
+                "/comments/post/{post_id}",
+                "/comments/user/{user_id}",
+            ]),
             put: Self::from(&[]),
             patch: Self::from(&[]),
             delete: Self::from(&[]),
