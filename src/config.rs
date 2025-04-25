@@ -34,6 +34,7 @@ pub struct Config {
     pub jwt_secret: String,
     pub jwt_expiration_duration: Duration,
     pub request_body_limit: usize,
+    pub port: u16,
 }
 
 impl Config {
@@ -56,6 +57,10 @@ impl Config {
             .map(|s| s.parse::<u64>().unwrap())
             .unwrap_or(5 * 1024 * 1024); // 5 Mb
 
+        let port = std::env::var("PORT")
+            .map(|s| s.parse::<u16>().unwrap())
+            .unwrap_or(3001);
+
         Self {
             env,
             db_url,
@@ -63,6 +68,7 @@ impl Config {
             jwt_secret,
             jwt_expiration_duration,
             request_body_limit: request_body_limit as usize,
+            port,
         }
     }
 }

@@ -2,10 +2,13 @@ use axum::{Extension, extract::Multipart, http::StatusCode, response::IntoRespon
 use axum_extra::{TypedHeader, headers::ContentType};
 use serde_json::json;
 
-use crate::{core::error::http_error::HttpError, extensions::S3ServiceExt};
+use crate::{
+    core::{error::http_error::HttpError, services::storage::UploadOptions},
+    extensions::StorageServiceExt,
+};
 
 pub async fn upload_file(
-    Extension(s3_service): S3ServiceExt,
+    Extension(storage_provider): StorageServiceExt,
     mut multipart: Multipart,
 ) -> Result<impl IntoResponse, HttpError> {
     while let Some(field) = multipart
@@ -25,8 +28,13 @@ pub async fn upload_file(
             let file_name = file_name.to_string();
             let data = field.bytes().await.unwrap_or_default();
 
-            let url = s3_service
-                .upload_file(data, file_name, content_type)
+            let upload_options = UploadOptions::new()
+                .set_file_name(file_name)
+                .set_content_type(content_type);
+
+            let url = storage_provider
+                .storage
+                .upload_file(data, upload_options)
                 .await
                 .map_err(|e| HttpError::server_error(e.to_string()))?;
 

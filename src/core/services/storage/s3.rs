@@ -1,8 +1,11 @@
 use std::{io::Cursor, str::FromStr};
 
+use async_trait::async_trait;
 use axum::body::Bytes;
 use chrono::Utc;
-use s3::{Bucket, creds::Credentials, error::S3Error};
+use s3::{Bucket, creds::Credentials};
+
+use super::{Storage, StorageError, UploadOptions};
 
 pub struct S3Service {
     bucket: Bucket,
@@ -26,14 +29,24 @@ impl S3Service {
             bucket: *bucket.unwrap(),
         }
     }
+}
 
-    pub async fn upload_file(
+#[async_trait]
+impl Storage for S3Service {
+    async fn upload_file(
         &self,
         data: Bytes,
-        file_name: String,
-        content_type: String,
-    ) -> Result<String, S3Error> {
-        let mut reader = Cursor::new(data);
+        upload_options: UploadOptions,
+    ) -> Result<String, StorageError> {
+        let mut reader: Cursor<Bytes> = Cursor::new(data);
+
+        let file_name = upload_options.file_name;
+        let content_type =
+            upload_options
+                .content_type
+                .ok_or(StorageError::InvalidUploadOptions(
+                    "Content type is required".into(),
+                ))?;
 
         let (name, extension) = file_name.split_once(".").unwrap_or((&file_name, ""));
 
@@ -46,7 +59,8 @@ impl S3Service {
 
         self.bucket
             .put_object_stream_with_content_type(&mut reader, s3_path.clone(), content_type)
-            .await?;
+            .await
+            .map_err(StorageError::S3)?;
 
         let url = format!(
             "https://{}.s3.{}.amazonaws.com/{}",

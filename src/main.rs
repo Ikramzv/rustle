@@ -14,6 +14,7 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use app_state::AppState;
+use config::CONFIG;
 use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
@@ -36,7 +37,9 @@ async fn main() {
 
     let app = router::api_router().with_state(Arc::new(AppState::new(db)));
 
-    let listener = TcpListener::bind("localhost:3001").await.unwrap();
+    let listener = TcpListener::bind(format!("localhost:{}", CONFIG.port))
+        .await
+        .unwrap();
 
     tracing::info!("Listening on {}", listener.local_addr().unwrap());
 

@@ -16,6 +16,7 @@ use axum::{
 use tower::ServiceBuilder;
 use tower_http::{
     cors::{AllowOrigin, CorsLayer},
+    services::ServeDir,
     timeout::TimeoutLayer,
     trace::TraceLayer,
 };
@@ -24,10 +25,10 @@ use crate::{
     app_state::SharedAppState,
     config::{CONFIG, Env},
     constants,
-    core::error::http_error::HttpError,
     core::{
+        error::http_error::HttpError,
         layers::auth_layer,
-        services::{mail::MailService, s3::S3Service},
+        services::{mail::MailService, storage::StorageProvider},
     },
 };
 
@@ -39,10 +40,13 @@ pub fn api_router() -> Router<SharedAppState> {
         .merge(user::router())
         .merge(post::router())
         .merge(comment::router())
-        .layer(Extension(Arc::new(S3Service::new())))
+        .layer(Extension(Arc::new(StorageProvider::new())))
         .layer(Extension(Arc::new(MailService::new())));
 
-    let router = init_layers(router);
+    let router = init_layers(router).nest_service(
+        "/uploads",
+        ServeDir::new(constants::DISK_STORAGE_PATH.to_string()),
+    );
 
     router
 }
