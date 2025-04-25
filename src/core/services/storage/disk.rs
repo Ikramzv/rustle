@@ -1,4 +1,9 @@
-use std::fs::DirBuilder;
+use std::{
+    fs::DirBuilder,
+    io::{Cursor, Read},
+    os::unix::fs::DirBuilderExt,
+    path::PathBuf,
+};
 
 use crate::{
     config::CONFIG,
@@ -16,26 +21,39 @@ use tokio::{
 use super::UploadOptions;
 
 pub struct DiskStorage {
-    path: String,
+    path: PathBuf,
 }
 
 impl DiskStorage {
     pub fn new() -> Self {
-        let path = constants::DISK_STORAGE_PATH.to_string();
+        let storage_path = constants::DISK_STORAGE_PATH.to_string();
 
-        match std::fs::exists(&path) {
-            Ok(_) => (),
-            Err(_) => match DirBuilder::new().create(&path) {
-                Ok(_) => (),
-                Err(e) => panic!("Failed to create disk storage path: {}", e),
-            },
+        let mut path = std::env::current_dir().unwrap_or_default();
+
+        path.push(storage_path);
+
+        let exists = match std::fs::exists(&path) {
+            Ok(v) => v,
+            Err(_) => false,
+        };
+
+        match exists {
+            true => tracing::info!("Disk storage path already exists at {}", path.display()),
+            false => Self::create_storage_dir(&path),
         }
 
         Self { path }
     }
 
     fn get_full_path(&self, file_name: &str) -> String {
-        format!("{}/{}", self.path, file_name)
+        format!("{}/{}", self.path.display(), file_name)
+    }
+
+    fn create_storage_dir(path: &PathBuf) {
+        match DirBuilder::new().create(&path) {
+            Ok(_) => tracing::info!("Disk storage path created at {}", path.display()),
+            Err(e) => tracing::error!("Failed to create disk storage path: {}", e),
+        }
     }
 }
 
@@ -62,9 +80,23 @@ impl Storage for DiskStorage {
             .inspect_err(|e| tracing::error!(?e))
             .map_err(StorageError::Io)?;
 
+        let mut cursor = Cursor::new(data);
+
+        const CHUNK_SIZE: usize = 1024 * 1024; // 1 MB
+
+        let mut buf = [0; CHUNK_SIZE];
+
         let mut writer = BufWriter::new(file);
 
-        writer.write_all(&data).await.map_err(StorageError::Io)?;
+        while let Ok(bytes_read) = cursor.read(&mut buf) {
+            if bytes_read == 0 {
+                break;
+            }
+
+            let bytes = &buf[..bytes_read];
+
+            writer.write(bytes).await.map_err(StorageError::Io)?;
+        }
 
         let url = format!("{}/{}", constants::SERVER_URL.to_string(), full_path);
 
