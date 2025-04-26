@@ -1,12 +1,10 @@
 use std::{
     fs::DirBuilder,
     io::{Cursor, Read},
-    os::unix::fs::DirBuilderExt,
     path::PathBuf,
 };
 
 use crate::{
-    config::CONFIG,
     constants,
     core::services::storage::{Storage, StorageError},
 };
