@@ -1,0 +1,623 @@
+{
+	"info": {
+		"_postman_id": "6b29c4cd-96b6-40d5-9abf-ea9ce8a5872c",
+		"name": "Rustle",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "40282430"
+	},
+	"item": [
+		{
+			"name": "AUTH",
+			"item": [
+				{
+					"name": "LOGIN",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"your_email@gmail.com\",\n    \"username\": \"username\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3001/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3001",
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "VERIFY",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const result = pm.response.json()",
+									"pm.environment.set(\"token\", result.token)"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"your_email@gmail.com\",\n    \"pin\": \"verification_pin\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3001/auth/verify",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3001",
+							"path": [
+								"auth",
+								"verify"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "USER",
+			"item": [
+				{
+					"name": "UPDATE PROFILE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"update_username\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3001/user/update_profile",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3001",
+							"path": [
+								"user",
+								"update_profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "WHOAMI",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c3JfYTQxY2JjZGItMGVmMy00Mzc5LWFjMTYtZWJmYmY4YzZiYjEwIiwiZXhwIjoxNzQ0NDgyNjM3LCJpYXQiOjE3NDQ0NzkwMzd9.DvYDsKUtK6y0ZnZSJqBXEz-zsmvgq2CFf5Uz-81Fe1U",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3001/user/whoami",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3001",
+							"path": [
+								"user",
+								"whoami"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "UPLOAD",
+			"item": [
+				{
+					"name": "UPLOAD FILE",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"description": "Test image",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:3001/upload",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3001",
+							"path": [
+								"upload"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "POSTS",
+			"item": [
+				{
+					"name": "GET ALL",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{domain}}/posts?limit=10",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"posts"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET USER POSTS",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{domain}}/posts/user/:userid",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"posts",
+								"user",
+								":userid"
+							],
+							"variable": [
+								{
+									"key": "userid",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CREATE POST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"The post title\",\n    \"media\": [\n        {\n            \"width\": 1600,\n            \"height\": 900,\n            \"url\": \"image_url\", // upload first, then paste the url here\n            \"type\": \"image\",\n            \"mimeType\": \"image/jpeg\"\n        }\n    ],\n    \"content\": \"Summary: in this tutorial, you will learn how to use the PostgreSQL CREATE TRIGGER statement to create a trigger.\\nTo create a new trigger in PostgreSQL, you follow these steps:\\n  First, create a trigger function using CREATE FUNCTION statement.\\n  Second, bind the trigger function to a table by using CREATE TRIGGER statement.\\nIf you are not familiar with creating a user-defined function, you can check out the PL/pgSQL section.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{domain}}/posts",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"posts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET BY ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{domain}}/posts/:postid",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"posts",
+								":postid"
+							],
+							"variable": [
+								{
+									"key": "postid",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE POST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"Updated post content\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{domain}}/posts/:postid",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"posts",
+								":postid"
+							],
+							"variable": [
+								{
+									"key": "postid",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE POST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"I'm living in Baku for 21 years\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{domain}}/posts/:postid",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"posts",
+								":postid"
+							],
+							"variable": [
+								{
+									"key": "postid",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "LIKE POST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{domain}}/posts/like/:postid",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"posts",
+								"like",
+								":postid"
+							],
+							"variable": [
+								{
+									"key": "postid",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "COMMENTS",
+			"item": [
+				{
+					"name": "GET POSTS COMMENTS",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{domain}}/comments/post/:postid",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"comments",
+								"post",
+								":postid"
+							],
+							"variable": [
+								{
+									"key": "postid",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET USER COMMENTS",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{domain}}/comments/user/:userid?limit=10",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"comments",
+								"user",
+								":userid"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							],
+							"variable": [
+								{
+									"key": "userid",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CREATE COMMENT",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    // \"parent_id\": \"pcm_f6951bec-38bb-4074-8ab2-c2049fda5729\", use it for creating reply to a comment\n    \"post_id\": \"pst_e05330f6-5816-4ba2-b700-eed89b60e06e\",\n    \"content\": \"Testing reply\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{domain}}/comments",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"comments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE COMMENT",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"Updated reply\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{domain}}/comments/:commentid",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"comments",
+								":commentid"
+							],
+							"variable": [
+								{
+									"key": "commentid",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE COMMENT",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{domain}}/comments/:commentid",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"comments",
+								":commentid"
+							],
+							"variable": [
+								{
+									"key": "commentid",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
