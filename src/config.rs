@@ -41,7 +41,7 @@ impl Config {
     pub fn build() -> Self {
         let env = std::env::var("CARGO_PROFILE")
             .map(|s| Env::from_str(&s).unwrap())
-            .expect("CARGO_PROFILE is not set");
+            .unwrap_or(Env::DEV);
 
         let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL is not set");
 

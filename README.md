@@ -10,34 +10,42 @@ This is a web application built with Rust.
 
 ## Installation
 
-1. Install required global binaries:
+Install required global binaries:
 
-   ```bash
-   cargo install cargo-watch
-   cargo install sqlx
-   ```
+```bash
+cargo install cargo-watch
+cargo install sqlx-cli
+```
+
+## Set up environment variables
+
+Copy `.env.example` file into `.env`, and set up environment variables based on your own credentials
+
+```bash
+cp .env.example .env
+```
 
 ## Database Setup
 
-1. Start the PostgreSQL database using Docker:
+Start the PostgreSQL database using Docker:
 
-   ```bash
-   docker-compose up -d
-   ```
+```bash
+docker-compose up -d
+```
 
-2. Run database migrations:
+Run database migrations:
 
-   ```bash
-   sqlx migrate run
-   ```
+```bash
+sqlx migrate run
+```
 
 ## Running the Application
 
-1. Start the development server with hot reload:
+Start the development server with hot reload:
 
-   ```bash
-   cargo-watch -r "run --bin rustle" -w ./src
-   ```
+```bash
+cargo-watch -r "run --bin rustle" -w ./src
+```
 
 ## Database Seeding
 
