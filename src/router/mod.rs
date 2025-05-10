@@ -4,7 +4,7 @@ mod post;
 mod upload;
 mod user;
 
-use std::{convert::Infallible, sync::Arc};
+use std::{any::Any, convert::Infallible, sync::Arc};
 
 use axum::{
     Extension, Router,
@@ -15,6 +15,7 @@ use axum::{
 };
 use tower::ServiceBuilder;
 use tower_http::{
+    catch_panic::CatchPanicLayer,
     cors::{AllowOrigin, CorsLayer},
     services::ServeDir,
     timeout::TimeoutLayer,
@@ -60,6 +61,7 @@ fn init_layers(router: Router<SharedAppState>) -> Router<SharedAppState> {
     router
         .layer(
             ServiceBuilder::new()
+                .layer(CatchPanicLayer::custom(handle_panic))
                 .layer(TraceLayer::new_for_http())
                 .layer(cors)
                 .layer(TimeoutLayer::new(constants::REQUEST_TIMEOUT))
@@ -95,4 +97,16 @@ async fn handle_405(req: Request) -> Result<Response, Infallible> {
     let response = error.into_response();
 
     Ok(response)
+}
+
+fn handle_panic(err: Box<dyn Any + Send + 'static>) -> Response {
+    let message = if let Some(s) = err.downcast_ref::<String>() {
+        s.clone()
+    } else if let Some(s) = err.downcast_ref::<&str>() {
+        s.to_string()
+    } else {
+        "Internal Server Error".to_string()
+    };
+
+    return HttpError::server_error(message).into_response();
 }

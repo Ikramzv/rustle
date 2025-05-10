@@ -39,9 +39,7 @@ pub struct Config {
 
 impl Config {
     pub fn build() -> Self {
-        let env = std::env::var("CARGO_PROFILE")
-            .map(|s| Env::from_str(&s).unwrap())
-            .unwrap_or(Env::DEV);
+        let env = Env::new();
 
         let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL is not set");
 
@@ -78,6 +76,25 @@ pub enum Env {
     RELEASE,
 }
 
+impl Env {
+    fn new() -> Self {
+        match std::env::var("CARGO_PROFILE") {
+            Ok(s) => Env::from_str(&s).unwrap(),
+            Err(_) => {
+                Env::warn_unknown_env("CARGO_PROFILE is not set");
+                Env::DEV
+            }
+        }
+    }
+
+    fn warn_unknown_env(s: &str) {
+        tracing::warn!(
+            "Unknown environment: {}\nUsing DEV environment by default",
+            s
+        );
+    }
+}
+
 impl FromStr for Env {
     type Err = String;
 
@@ -85,7 +102,10 @@ impl FromStr for Env {
         match s {
             "dev" => Ok(Env::DEV),
             "release" => Ok(Env::RELEASE),
-            _ => Err("Error parsing Config::env : Unknown environment".to_string()),
+            _ => {
+                Env::warn_unknown_env(s);
+                Ok(Env::DEV)
+            }
         }
     }
 }

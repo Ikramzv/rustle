@@ -27,6 +27,7 @@ impl ExcludedPaths {
         Self {
             post: Self::from(&["/auth/login", "/auth/verify", "/upload"]),
             get: Self::from(&[
+                "/",
                 "/posts",
                 "/posts/{post_id}",
                 "/posts/user/{user_id}",
